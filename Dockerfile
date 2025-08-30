@@ -1,5 +1,5 @@
 # Use an official Python 3.9 image as our base
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # This is the crucial step: Install the Tesseract OCR program onto the server's operating system
 RUN apt-get update && apt-get install -y tesseract-ocr
