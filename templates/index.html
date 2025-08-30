@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Resume Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Universal Resume Analyzer</h1>
+        <p class="subtitle">Gain a competitive edge by analyzing your resume against any job description, for any industry.</p>
+        
+        <form action="/analyze" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="jd_input_method" id="jd_input_method" value="text">
+            <div class="main-form-container">
+                <div class="form-section">
+                    <h3>Step 1: Upload Your Resume</h3>
+                    <input type="file" name="resume_pdf" accept=".pdf" required>
+                </div>
+                <div class="form-section">
+                    <h3>Step 2: Provide Job Description</h3>
+                    <div class="tabs">
+                        <button type="button" class="tab-button active" onclick="openTab(event, 'Text')">Paste Text</button>
+                        <button type="button" class="tab-button" onclick="openTab(event, 'PDF')">Upload PDF</button>
+                        <button type="button" class="tab-button" onclick="openTab(event, 'Image')">Upload Image</button>
+                    </div>
+                    <div id="Text" class="tab-content active">
+                        <textarea name="job_description_text" placeholder="Paste the job description text here..."></textarea>
+                    </div>
+                    <div id="PDF" class="tab-content">
+                        <input type="file" name="job_description_pdf" accept=".pdf">
+                    </div>
+                    <div id="Image" class="tab-content">
+                        <input type="file" name="job_description_image" accept="image/*">
+                    </div>
+                </div>
+            </div>
+            <input type="submit" value="Generate Analysis" class="submit-btn">
+        </form>
+
+        {% if submitted %}
+        <div class="results-container">
+            <div class="results-summary">
+                <div class="score-container">
+                    <div class="score">{{ match_score }}%</div>
+                    <div class="feedback-text">
+                        <p class="feedback-message {{ feedback.status }}">{{ feedback.message }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="requirements-analysis">
+                <h2>Detailed Requirement Analysis</h2>
+                {% if analysis_results %}
+                    {% for result in analysis_results %}
+                        <div class="requirement-card {% if result.is_met %}met{% else %}unmet{% endif %}">
+                            <p class="requirement-text">{{ result.requirement }}</p>
+                            <div class="skill-pills">
+                                {% for skill in result.required %}
+                                    {% if skill in result.met %}
+                                        <span class="skill-pill met">{{ skill.title() }} (Found)</span>
+                                    {% else %}
+                                        <span class="skill-pill missing">{{ skill.title() }} (Missing)</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No technical requirements could be parsed from the job description.</p>
+                {% endif %}
+            </div>
+            
+            {% if suggestions %}
+            <div class="prep-plan-container">
+                <h2>Personalized Preparation Plan</h2>
+                {% for skill, details in suggestions.items() %}
+                    <div class="skill-card">
+                        <h3>{{ skill.title() }}</h3>
+                        <h4>How to Prepare</h4>
+                        <p>{{ details.preparation }}</p>
+                        <h4>Project Ideas</h4>
+                        <ul>
+                            {% for project in details.projects %}<li>{{ project }}</li>{% endfor %}
+                        </ul>
+                        <h4>Learning Resources</h4>
+                        <ul>
+                            {% for name, url in details.resources.items() %}<li><a href="{{ url }}" target="_blank">{{ name }}</a></li>{% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+             <details class="debug-view">
+                <summary>View Raw Extracted Text (For Debugging)</summary>
+                <div class="skills-row" style="margin-top: 15px;">
+                    <div class="skills-column">
+                        <h4>Extracted Resume Text:</h4>
+                        <pre>{{ raw_resume_text }}</pre>
+                    </div>
+                    <div class="skills-column">
+                        <h4>Extracted Job Description Text:</h4>
+                        <pre>{{ raw_jd_text }}</pre>
+                    </div>
+                </div>
+            </details>
+        </div>
+        {% endif %}
+
+        <footer>
+            <p>Made with ❤️ by Sanjeeth. All the best for your job search!</p>
+        </footer>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            const tabbuttons = document.getElementsByClassName("tab-button");
+            for (let i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].className = tabbuttons[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+            document.getElementById('jd_input_method').value = tabName.toLowerCase();
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelector('.tab-button').click();
+        });
+    </script>
+</body>
+</html>
